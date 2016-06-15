@@ -37,6 +37,7 @@
     this.customDragImage = null;
     this.customDragImageX = null;
     this.customDragImageY = null;
+    this.hasMoved = false;
     this.el = el || event.target;
 
     log("dragstart");
@@ -76,6 +77,8 @@
       }
     },
     move: function(event) {
+      this.hasMoved = true;
+
       var pageXs = [], pageYs = [];
       [].forEach.call(event.changedTouches, function(touch) {
         pageXs.push(touch.pageX);
@@ -125,12 +128,23 @@
         this.dispatchLeave(event);
       }
 
-      var target = elementFromTouchEvent(this.el,event)
-      if (target) {
-        log("found drop target " + target.tagName);
-        this.dispatchDrop(target, event);
-      } else {
-        log("no drop target");
+      if (!this.hasMoved) {
+        var clickEvt = document.createEvent("MouseEvents");
+        clickEvt.initMouseEvent("click", true, true, this.el.ownerDocument.defaultView, 1,
+          event.screenX, event.screenY, event.clientX, event.clientY,
+          event.ctrlKey, event.altKey, event.shiftKey, event.metaKey, 0, null);
+        this.el.dispatchEvent(clickEvt);
+        log("has not moved, so simulating click to anchor");
+      }
+      else
+      {
+        var target = elementFromTouchEvent(this.el,event)
+        if (target) {
+          log("found drop target " + target.tagName);
+          this.dispatchDrop(target, event);
+        } else {
+          log("no drop target");
+        }
       }
 
       var dragendEvt = doc.createEvent("Event");
